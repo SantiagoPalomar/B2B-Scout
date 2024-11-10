@@ -3,3 +3,4 @@ virtualenv/
 env/
 *.pyc
 __pycache__/
+.env
