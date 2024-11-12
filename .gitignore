@@ -1,6 +1,18 @@
-venv/
-virtualenv/
-env/
-*.pyc
-__pycache__/
+# Ignorar variables de entorno
 .env
+
+# Ignorar entorno virtual
+venv/
+.venv/
+
+# Ignorar archivos de configuración de entorno de desarrollo
+.vscode/
+.idea/
+
+# Ignorar archivos de caché de Python
+__pycache__/
+*.py[cod]
+
+# Ignorar dependencias específicas del sistema operativo
+.DS_Store  # Mac
+Thumbs.db  # Windows
