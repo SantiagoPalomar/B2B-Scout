@@ -130,6 +130,31 @@ if opciones == "Ver Proveedores":
 
         st.plotly_chart(fig)
 
+# Resumen de métricas individuales
+        st.subheader("Resumen de Métricas por Proveedor")
+        for index, row in filtered_df.iterrows():
+            st.write(f"**Proveedor: {row['razon_social']}**")
+            st.write(f"- Razón de Endeudamiento 2021: {row['Razón de Endeudamiento 2021'] * 100:.2f}%")
+            st.write(f"- Rentabilidad 2021: {row['Rentabilidad 2021'] * 100:.2f}%")
+            st.write (f"- Solvencia 2021: {row['Solvencia 2021'] * 100:.2f}%")
+            st.write(f"- Razón de Endeudamiento 2020: {row['Razón de Endeudamiento 2020'] * 100:.2f}%")
+            st.write(f"- Rentabilidad 2020: {row['Rentabilidad 2020'] * 100:.2f}%")
+            st.write(f"- Solvencia 2020: {row['Solvencia 2020'] * 100:.2f}%")
+            st.write("\n")
+
+# Recomendaciones basadas en las métricas
+        mejor_cumplimiento = filtered_df.loc[(filtered_df['ganancia_perdida_2021'] / filtered_df['ingresos_operacionales_2021']).idxmax()]
+        menor_riesgo = filtered_df.loc[(filtered_df['total_pasivos_2021'] / filtered_df['total_activos_2021']).idxmin()]
+        mas_sostenible = filtered_df.loc[(filtered_df['total_patrimonio_2021'] / filtered_df['total_pasivos_2021']).idxmax()]
+
+        st.write(f"- Mejor cumplimiento: **{mejor_cumplimiento['razon_social']}** con {mejor_cumplimiento['ganancia_perdida_2021'] / mejor_cumplimiento['ingresos_operacionales_2021'] * 100:.2f}%")
+        st.write(f"- Menor riesgo financiero: **{menor_riesgo['razon_social']}** con {menor_riesgo['total_pasivos_2021'] / menor_riesgo['total_activos_2021'] * 100:.2f}%")
+        st.write(f"- Más sostenible: **{mas_sostenible['razon_social']}** con {mas_sostenible['total_patrimonio_2021'] / mas_sostenible['total_pasivos_2021'] * 100:.2f}%")
+        st.write("\nConsideraciones:")
+        st.write("- Evalúe la posibilidad de aumentar la colaboración con proveedores de alto cumplimiento.")
+        st.write("- Considere diversificar para mitigar riesgos con proveedores de alto riesgo financiero.")
+        st.write("- Explore oportunidades para mejorar la sostenibilidad en su cadena de suministro.")
+
 
         # Geocodificación de las ciudades y mapa
 
@@ -167,31 +192,6 @@ if opciones == "Ver Proveedores":
 
             st.warning("No se pudieron geocodificar las ciudades.")
 
-
-        # Resumen de métricas individuales
-        st.subheader("Resumen de Métricas por Proveedor")
-        for index, row in filtered_df.iterrows():
-            st.write(f"**Proveedor: {row['razon_social']}**")
-            st.write(f"- Razón de Endeudamiento 2021: {row['Razón de Endeudamiento 2021'] * 100:.2f}%")
-            st.write(f"- Rentabilidad 2021: {row['Rentabilidad 2021'] * 100:.2f}%")
-            st.write (f"- Solvencia 2021: {row['Solvencia 2021'] * 100:.2f}%")
-            st.write(f"- Razón de Endeudamiento 2020: {row['Razón de Endeudamiento 2020'] * 100:.2f}%")
-            st.write(f"- Rentabilidad 2020: {row['Rentabilidad 2020'] * 100:.2f}%")
-            st.write(f"- Solvencia 2020: {row['Solvencia 2020'] * 100:.2f}%")
-            st.write("\n")
-
-        # Recomendaciones basadas en las métricas
-        mejor_cumplimiento = filtered_df.loc[(filtered_df['ganancia_perdida_2021'] / filtered_df['ingresos_operacionales_2021']).idxmax()]
-        menor_riesgo = filtered_df.loc[(filtered_df['total_pasivos_2021'] / filtered_df['total_activos_2021']).idxmin()]
-        mas_sostenible = filtered_df.loc[(filtered_df['total_patrimonio_2021'] / filtered_df['total_pasivos_2021']).idxmax()]
-
-        st.write(f"- Mejor cumplimiento: **{mejor_cumplimiento['razon_social']}** con {mejor_cumplimiento['ganancia_perdida_2021'] / mejor_cumplimiento['ingresos_operacionales_2021'] * 100:.2f}%")
-        st.write(f"- Menor riesgo financiero: **{menor_riesgo['razon_social']}** con {menor_riesgo['total_pasivos_2021'] / menor_riesgo['total_activos_2021'] * 100:.2f}%")
-        st.write(f"- Más sostenible: **{mas_sostenible['razon_social']}** con {mas_sostenible['total_patrimonio_2021'] / mas_sostenible['total_pasivos_2021'] * 100:.2f}%")
-        st.write("\nConsideraciones:")
-        st.write("- Evalúe la posibilidad de aumentar la colaboración con proveedores de alto cumplimiento.")
-        st.write("- Considere diversificar para mitigar riesgos con proveedores de alto riesgo financiero.")
-        st.write("- Explore oportunidades para mejorar la sostenibilidad en su cadena de suministro.")
 
 # Página "Comparación de Proveedores"
 elif opciones == "Comparación de Proveedores":
