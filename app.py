@@ -30,6 +30,12 @@ def obtener_datos():
 # Título de la aplicación
 st.title("B2B SCOUT")
 
+# Ruta de la imagen
+logo_path = "Logo_B2B.png" 
+
+# Mostrar la imagen
+st.image(logo_path, caption="Mi Logo B2B", use_column_width=True)
+
 data_db = obtener_datos()
 
 # Crear el menú de navegación en la barra lateral
