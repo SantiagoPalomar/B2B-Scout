@@ -27,16 +27,12 @@ def obtener_datos():
     conn.close()
     return df
 
-# Crear dos columnas
 
-col1, col2 = st.columns([1, 3])  # Primer número: ancho de la columna del logo
-with col1:
-    st.image("Logo_B2B.png", width=150)  # Ajusta el ancho según necesites
+# Ruta de la imagen
+logo_path = "Logo_B2B.png" 
 
-# En la segunda columna (título)
-with col2:
-    st.title("B2B SCOUT")
-
+# Mostrar la imagen
+st.image(logo_path, width=150)
 
 data_db = obtener_datos()
 
