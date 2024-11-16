@@ -40,27 +40,38 @@ data_db = obtener_datos()
 opciones = st.sidebar.radio("Selecciona una opción:", ["Ver Proveedores", "Comparación de Proveedores"])
 
 
-# Página "Ver Proveedores"
-
 if opciones == "Ver Proveedores":
+
 
     search_term = st.text_input("Buscar proveedor...")
 
     
 
+    # Obtener la lista de macrosectores únicos
+
+    macrosectores = data_db['macrosector'].unique().tolist()
+
+    macrosector_seleccionado = st.selectbox("Selecciona un macrosector", ["Todos"] + macrosectores)
+
+
     data_db = obtener_datos()
 
 
-    # Filtrar los proveedores según el término de búsqueda
+    # Filtrar los proveedores según el término de búsqueda y el macrosector seleccionado
 
-    filtered_df = data_db[data_db["razon_social"].str.contains(search_term, case=False)] if search_term else data_db
+    if macrosector_seleccionado != "Todos":
+
+        filtered_df = data_db[(data_db["razon_social"].str.contains(search_term, case=False)) & 
+
+                               (data_db["macrosector"] == macrosector_seleccionado)]
+
+    else:
+
+        filtered_df = data_db[data_db["razon_social"].str.contains(search_term, case=False)] if search_term else data_db
 
 
     if not filtered_df.empty:
 
-        
-
-        data_db = obtener_datos()
 
         # Calcular métricas adicionales para 2021
 
@@ -91,6 +102,7 @@ if opciones == "Ver Proveedores":
 
         metrics = ['Razón de Endeudamiento', 'Rentabilidad', 'Solvencia']
 
+
         values_2021 = [
 
             filtered_df['Razón de Endeudamiento 2021'].mean() * 100,
@@ -100,6 +112,7 @@ if opciones == "Ver Proveedores":
             filtered_df['Solvencia 2021'].mean() * 100
 
         ]
+
 
         values_2020 = [
 
@@ -120,78 +133,89 @@ if opciones == "Ver Proveedores":
 
         ])
 
+
         fig.update_layout(title='Comparación de Indicadores Clave (2020 vs 2021)', 
 
-                        xaxis_title='Métricas', 
+                          xaxis_title='Métricas', 
 
-                        yaxis_title='Valores (%)',
+                          yaxis_title='Valores (%)',
 
-                        barmode='group')
+                          barmode='group')
+
 
         st.plotly_chart(fig)
 
-# Resumen de métricas individuales
+
+        # Resumen de métricas individuales
+
         st.subheader("Resumen de Métricas por Proveedor")
+
         for index, row in filtered_df.iterrows():
+
             st.write(f"**Proveedor: {row['razon_social']}**")
+
             st.write(f"- Razón de Endeudamiento 2021: {row['Razón de Endeudamiento 2021'] * 100:.2f}%")
+
             st.write(f"- Rentabilidad 2021: {row['Rentabilidad 2021'] * 100:.2f}%")
-            st.write (f"- Solvencia 2021: {row['Solvencia 2021'] * 100:.2f}%")
+
+            st.write(f"- Solvencia 2021: {row['Solvencia 2021'] * 100:.2f}%")
+
             st.write(f"- Razón de Endeudamiento 2020: {row['Razón de Endeudamiento 2020'] * 100:.2f}%")
+
             st.write(f"- Rentabilidad 2020: {row['Rentabilidad 2020'] * 100:.2f}%")
+
             st.write(f"- Solvencia 2020: {row['Solvencia 2020'] * 100:.2f}%")
+
             st.write("\n")
 
-# Recomendaciones basadas en las métricas
+
+        # Recomendaciones basadas en las métricas
+
         mejor_cumplimiento = filtered_df.loc[(filtered_df['ganancia_perdida_2021'] / filtered_df['ingresos_operacionales_2021']).idxmax()]
+
         menor_riesgo = filtered_df.loc[(filtered_df['total_pasivos_2021'] / filtered_df['total_activos_2021']).idxmin()]
+
         mas_sostenible = filtered_df.loc[(filtered_df['total_patrimonio_2021'] / filtered_df['total_pasivos_2021']).idxmax()]
 
+
         st.write(f"- Mejor cumplimiento: **{mejor_cumplimiento['razon_social']}** con {mejor_cumplimiento['ganancia_perdida_2021'] / mejor_cumplimiento['ingresos_operacionales_2021'] * 100:.2f}%")
+
         st.write(f"- Menor riesgo financiero: **{menor_riesgo['razon_social']}** con {menor_riesgo['total_pasivos_2021'] / menor_riesgo['total_activos_2021'] * 100:.2f}%")
+
         st.write(f"- Más sostenible: **{mas_sostenible['razon_social']}** con {mas_sostenible['total_patrimonio_2021'] / mas_sostenible['total_pasivos_2021'] * 100:.2f}%")
+
         st.write("\nConsideraciones:")
+
         st.write("- Evalúe la posibilidad de aumentar la colaboración con proveedores de alto cumplimiento.")
+
         st.write("- Considere diversificar para mitigar riesgos con proveedores de alto riesgo financiero.")
+
         st.write("- Explore oportunidades para mejorar la sostenibilidad en su cadena de suministro.")
 
 
         # Geocodificación de las ciudades y mapa
 
         geolocator = Nominatim(user_agent="mi_aplicacion_simulada")
-
         geocoded_data = []
-
-
+        
         for _, row in filtered_df.iterrows():
-
             location = geolocator.geocode(row['ciudad_domicilio'])
-
             if location:
-
                 geocoded_data.append({
-
                     'razon_social': row['razon_social'],
-
                     'lat': location.latitude,
-
                     'lon': location.longitude
-
                 })
 
 
         if geocoded_data:
 
             df_geocoded = pd.DataFrame(geocoded_data)
-
             st.subheader("Ubicación de Proveedores en Colombia")
-
             st.map(df_geocoded[['lat', 'lon']])
 
         else:
-
             st.warning("No se pudieron geocodificar las ciudades.")
-
 
 # Página "Comparación de Proveedores"
 elif opciones == "Comparación de Proveedores":
