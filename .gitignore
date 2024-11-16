@@ -16,3 +16,5 @@ __pycache__/
 # Ignorar dependencias específicas del sistema operativo
 .DS_Store  # Mac
 Thumbs.db  # Windows
+
+#Por favor si crean entornos virtuales agregar el nombre de la carpeta de su estorno virtual aqui adentro de este archivo
