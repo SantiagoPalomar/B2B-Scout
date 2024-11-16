@@ -2,50 +2,61 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from geopy.geocoders import Nominatim
+import psycopg2
+from config import get_db_config
+
+#Conexion a la base de datos
+def conectar_db():
+    config = get_db_config()
+    print(config)  # Esto mostrará todas las claves y valores en el diccionario
+    conn = psycopg2.connect(
+        host=config['host'],
+        port=config['port'],
+        database=config['database'],
+        user=config['user'],
+        password=config['password'],
+        sslmode='require'  # Usa SSL si es necesario
+    )
+    return conn
+
+#Obtener los datos de la tabla empresas
+def obtener_datos():
+    conn = conectar_db()
+    query = "SELECT * FROM empresas"
+    df = pd.read_sql(query, conn)
+    conn.close()
+    return df
 
 # Título de la aplicación
 st.title("B2B SCOUT")
 
-# Simulación de datos
-data_simulada = pd.DataFrame({
-    "NIT": ["123456789", "987654321", "543216789"],
-    "RAZON_SOCIAL": ["Proveedor A", "Proveedor B", "Proveedor C"],
-    "CIUDAD_DOMICILIO": ["Bogotá", "Medellín", "Cali"],
-    "CIIU": ["6201", "6202", "6203"],
-    "MACROSECTOR": ["Tecnología", "Construcción", "Manufactura"],
-    "CONTACTO": ["contactoA@example.com", "contactoB@example.com", "contactoC@example.com"],
-    "INGRESOS_OPERACIONALES_2021": [1000000, 2000000, 1500000],
-    "GANANCIA_PERDIDA_2021": [200000, 300000, 250000],
-    "TOTAL_ACTIVOS_2021": [500000, 700000, 600000],
-    "TOTAL_PASIVOS_2021": [100000, 200000, 150000],
-    "TOTAL_PATRIMONIO_2021": [400000, 500000, 450000],
-    "GANANCIA_PERDIDA_2020": [150000, 250000, 200000],
-    "INGRESOS_OPERACIONALES_2020": [900000, 1800000, 1400000],  # Asegúrate de incluir esto
-    "TOTAL_ACTIVOS_2020": [450000, 650000, 550000],
-    "TOTAL_PASIVOS_2020": [90000, 190000, 140000],
-    "TOTAL_PATRIMONIO_2020": [360000, 460000, 410000]
-})
+data_db = obtener_datos()
 
 # Crear el menú de navegación en la barra lateral
 opciones = st.sidebar.radio("Selecciona una opción:", ["Ver Proveedores", "Comparación de Proveedores"])
 
+
 # Página "Ver Proveedores"
 if opciones == "Ver Proveedores":
     search_term = st.text_input("Buscar proveedor...")
+    
+    data_db = obtener_datos()
 
     # Filtrar los proveedores según el término de búsqueda
-    filtered_df = data_simulada[data_simulada["RAZON_SOCIAL"].str.contains(search_term, case=False)] if search_term else data_simulada
+    filtered_df = data_db[data_db["razon_social"].str.contains(search_term, case=False)] if search_term else data_db
 
     if not filtered_df.empty:
+        
+        data_db = obtener_datos()
         # Calcular métricas adicionales para 2021
-        filtered_df['Razón de Endeudamiento 2021'] = filtered_df['TOTAL_PASIVOS_2021'] / filtered_df['TOTAL_ACTIVOS_2021']
-        filtered_df['Rentabilidad 2021'] = filtered_df['GANANCIA_PERDIDA_2021'] / filtered_df['INGRESOS_OPERACIONALES_2021']
-        filtered_df['Solvencia 2021'] = filtered_df['TOTAL_PATRIMONIO_2021'] / filtered_df['TOTAL_PASIVOS_2021']
+        filtered_df['Razón de Endeudamiento 2021'] = filtered_df['total_pasivos_2021'] / filtered_df['total_activos_2021']
+        filtered_df['Rentabilidad 2021'] = filtered_df['ganancia_perdida_2021'] / filtered_df['ingresos_operacionales_2021']
+        filtered_df['Solvencia 2021'] = filtered_df['total_patrimonio_2021'] / filtered_df['total_pasivos_2021']
 
         # Calcular métricas adicionales para 2020
-        filtered_df['Razón de Endeudamiento 2020'] = filtered_df['TOTAL_PASIVOS_2020'] / filtered_df['TOTAL_ACTIVOS_2020']
-        filtered_df['Rentabilidad 2020'] = filtered_df['GANANCIA_PERDIDA_2020'] / filtered_df['INGRESOS_OPERACIONALES_2020']
-        filtered_df['Solvencia 2020'] = filtered_df['TOTAL_PATRIMONIO_2020'] / filtered_df['TOTAL_PASIVOS_2020']
+        filtered_df['Razón de Endeudamiento 2020'] = filtered_df['total_pasivos_2020'] / filtered_df['total_activos_2020']
+        filtered_df['Rentabilidad 2020'] = filtered_df['ganancia_perdida_2020'] / filtered_df['ingresos_operacionales_2020']
+        filtered_df['Solvencia 2020'] = filtered_df['total_patrimonio_2020'] / filtered_df['total_pasivos_2020']
 
         # Mostrar tabla de proveedores
         st.subheader("Lista de Proveedores")
@@ -79,10 +90,10 @@ if opciones == "Ver Proveedores":
         geocoded_data = []
 
         for _, row in filtered_df.iterrows():
-            location = geolocator.geocode(row['CIUDAD_DOMICILIO'])
+            location = geolocator.geocode(row['ciudad_domicilio'])
             if location:
                 geocoded_data.append({
-                    'RAZON_SOCIAL': row['RAZON_SOCIAL'],
+                    'razon_social': row['razon_social'],
                     'lat': location.latitude,
                     'lon': location.longitude
                 })
@@ -102,20 +113,20 @@ elif opciones == "Comparación de Proveedores":
     col1, col2 = st.columns(2)
 
     with col1:
-        proveedor1 = st.selectbox("Seleccionar primer proveedor", data_simulada["RAZON_SOCIAL"], key="proveedor1")
+        proveedor1 = st.selectbox("Seleccionar primer proveedor", data_db["razon_social"], key="proveedor1")
     with col2:
-        proveedor2 = st.selectbox("Seleccionar segundo proveedor", data_simulada["RAZON_SOCIAL"], key="proveedor2")
+        proveedor2 = st.selectbox("Seleccionar segundo proveedor", data_db["razon_social"], key="proveedor2")
     if proveedor1 and proveedor2:
-        datos_proveedor1 = data_simulada[data_simulada["RAZON_SOCIAL"] == proveedor1].iloc[0]
-        datos_proveedor2 = data_simulada[data_simulada["RAZON_SOCIAL"] == proveedor2].iloc[0]
+        datos_proveedor1 = data_db[data_db["razon_social"] == proveedor1].iloc[0]
+        datos_proveedor2 = data_db[data_db["razon_social"] == proveedor2].iloc[0]
 
         # Calcular métricas para los proveedores seleccionados
-        razon_endeudamiento1 = datos_proveedor1['TOTAL_PASIVOS_2021'] / datos_proveedor1['TOTAL_ACTIVOS_2021'] * 100
-        rentabilidad1 = datos_proveedor1['GANANCIA_PERDIDA_2021'] / datos_proveedor1['INGRESOS_OPERACIONALES_2021'] * 100
-        solvencia1 = datos_proveedor1['TOTAL_PATRIMONIO_2021'] / datos_proveedor1['TOTAL_PASIVOS_2021'] * 100
-        razon_endeudamiento2 = datos_proveedor2['TOTAL_PASIVOS_2021'] / datos_proveedor2['TOTAL_ACTIVOS_2021'] * 100
-        rentabilidad2 = datos_proveedor2['GANANCIA_PERDIDA_2021'] / datos_proveedor2['INGRESOS_OPERACIONALES_2021'] * 100
-        solvencia2 = datos_proveedor2['TOTAL_PATRIMONIO_2021'] / datos_proveedor2['TOTAL_PASIVOS_2021'] * 100
+        razon_endeudamiento1 = datos_proveedor1['total_pasivos_2021'] / datos_proveedor1['total_activos_2021'] * 100
+        rentabilidad1 = datos_proveedor1['ganancia_perdida_2021'] / datos_proveedor1['ingresos_operacionales_2021'] * 100
+        solvencia1 = datos_proveedor1['total_patrimonio_2021'] / datos_proveedor1['total_pasivos_2021'] * 100
+        razon_endeudamiento2 = datos_proveedor2['total_pasivos_2021'] / datos_proveedor2['total_activos_2021'] * 100
+        rentabilidad2 = datos_proveedor2['ganancia_perdida_2021'] / datos_proveedor2['ingresos_operacionales_2021'] * 100
+        solvencia2 = datos_proveedor2['total_patrimonio_2021'] / datos_proveedor2['total_pasivos_2021'] * 100
 
         # Crear gráfico comparativo
         fig = go.Figure(data=[
@@ -128,13 +139,13 @@ elif opciones == "Comparación de Proveedores":
         st.plotly_chart(fig)
 
         # Recomendaciones basadas en las métricas
-        mejor_cumplimiento = data_simulada.loc[(data_simulada['GANANCIA_PERDIDA_2021'] / data_simulada['INGRESOS_OPERACIONALES_2021']).idxmax()]
-        menor_riesgo = data_simulada.loc[(data_simulada['TOTAL_PASIVOS_2021'] / data_simulada['TOTAL_ACTIVOS_2021']).idxmin()]
-        mas_sostenible = data_simulada.loc[(data_simulada['TOTAL_PATRIMONIO_2021'] / data_simulada['TOTAL_PASIVOS_2021']).idxmax()]
+        mejor_cumplimiento = data_db.loc[(data_db['ganancia_perdida_2021'] / data_db['ingresos_operacionales_2021']).idxmax()]
+        menor_riesgo = data_db.loc[(data_db['total_pasivos_2021'] / data_db['total_activos_2021']).idxmin()]
+        mas_sostenible = data_db.loc[(data_db['total_patrimonio_2021'] / data_db['total_pasivos_2021']).idxmax()]
 
-        st.write(f"- Mejor cumplimiento: **{mejor_cumplimiento['RAZON_SOCIAL']}** con {mejor_cumplimiento['GANANCIA_PERDIDA_2021'] / mejor_cumplimiento['INGRESOS_OPERACIONALES_2021'] * 100:.2f}%")
-        st.write(f"- Menor riesgo financiero: **{menor_riesgo['RAZON_SOCIAL']}** con {menor_riesgo['TOTAL_PASIVOS_2021'] / menor_riesgo['TOTAL_ACTIVOS_2021'] * 100:.2f}%")
-        st.write(f"- Más sostenible: **{mas_sostenible['RAZON_SOCIAL']}** con {mas_sostenible['TOTAL_PATRIMONIO_2021'] / mas_sostenible['TOTAL_PASIVOS_2021'] * 100:.2f}%")
+        st.write(f"- Mejor cumplimiento: **{mejor_cumplimiento['razon_social']}** con {mejor_cumplimiento['ganancia_perdida_2021'] / mejor_cumplimiento['ingresos_operacionales_2021'] * 100:.2f}%")
+        st.write(f"- Menor riesgo financiero: **{menor_riesgo['razon_social']}** con {menor_riesgo['total_pasivos_2021'] / menor_riesgo['total_activos_2021'] * 100:.2f}%")
+        st.write(f"- Más sostenible: **{mas_sostenible['razon_social']}** con {mas_sostenible['total_patrimonio_2021'] / mas_sostenible['total_pasivos_2021'] * 100:.2f}%")
 
         st.write("\nConsideraciones:")
         st.write("- Evalúe la posibilidad de aumentar la colaboración con proveedores de alto cumplimiento.")
