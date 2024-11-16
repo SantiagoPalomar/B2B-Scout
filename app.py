@@ -34,7 +34,7 @@ st.title("B2B SCOUT")
 logo_path = "Logo_B2B.png" 
 
 # Mostrar la imagen
-st.image(logo_path, caption="Mi Logo B2B", use_column_width=True)
+st.image(logo_path, caption="Mi Logo B2B", width=300)
 
 data_db = obtener_datos()
 
