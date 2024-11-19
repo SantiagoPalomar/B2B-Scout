@@ -2,6 +2,7 @@
 
 ## 📋 Descripción
 B2B Scout es una plataforma de análisis de proveedores que ayuda a empresarios a optimizar la selección y gestión de proveedores mediante el análisis de datos y visualizaciones interactivas.
+Puedes ver la página en vivo aquí: https://b2b-scout-vh3zdp3gzm3wzco6dwszc3.streamlit.app/
 
 ## 🚀 Características
 - Extracción automática de datos de proveedores
